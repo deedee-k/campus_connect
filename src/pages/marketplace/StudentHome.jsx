@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../store/authStore';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
-import { User, MapPin, Phone, AlignLeft, Save, Shield, Store, Clock } from 'lucide-react';
+import { User, MapPin, Phone, AlignLeft, Save, Shield, Store, Clock, MessageSquare, Package } from 'lucide-react';
 import { myRoleRequests, requestSellerRole } from '../../services/roleRequests';
+import { Link } from 'react-router-dom';
 
 export default function StudentHome() {
   const profile = useAuth((s) => s.profile);
@@ -31,6 +32,7 @@ export default function StudentHome() {
   }, [profile?.role]);
 
   const pending = requests.find((r) => r.status === 'pending');
+  const isSeller = profile?.role === 'seller' || profile?.role === 'admin';
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -73,7 +75,9 @@ export default function StudentHome() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6 pb-10">
+      
+      {/* Profile Header */}
       <div className="flex items-center gap-4 border-b pb-4">
         <div className="w-16 h-16 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center text-2xl font-bold uppercase">
           {profile?.name?.charAt(0) ?? 'S'}
@@ -89,6 +93,32 @@ export default function StudentHome() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Quick Links (Mobile Shortcuts) */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link to="/transactions" className="card p-4 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
+          <div className="w-10 h-10 rounded-full bg-violet-100 text-violet-600 grid place-items-center">
+            <MessageSquare size={20} />
+          </div>
+          <span className="text-sm font-medium text-slate-700">My Orders</span>
+        </Link>
+        
+        {isSeller ? (
+          <Link to="/seller-orders" className="card p-4 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
+            <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 grid place-items-center">
+              <Package size={20} />
+            </div>
+            <span className="text-sm font-medium text-slate-700">My Sales</span>
+          </Link>
+        ) : (
+          <Link to="/favourites" className="card p-4 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
+            <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 grid place-items-center">
+              <Store size={20} />
+            </div>
+            <span className="text-sm font-medium text-slate-700">Favourites</span>
+          </Link>
+        )}
       </div>
 
       <form onSubmit={handleSave} className="card p-6 space-y-5">
@@ -125,13 +155,12 @@ export default function StudentHome() {
               value={form.phone_number}
               onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
             />
-            <p className="text-xs text-slate-500 mt-1">Buyers will use this to contact you.</p>
           </div>
           <div>
             <label className="label flex items-center gap-1"><MapPin size={14}/> Campus Location</label>
             <input 
               className="input" 
-              placeholder="e.g. Res 4, Library, Science Block"
+              placeholder="e.g. Res 4, Library"
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
             />
@@ -143,7 +172,7 @@ export default function StudentHome() {
           <textarea 
             className="input" 
             rows={3}
-            placeholder="Tell buyers a bit about yourself or what you usually sell..."
+            placeholder="Tell buyers a bit about yourself..."
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
           />

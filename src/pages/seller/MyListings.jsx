@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  PlusCircle, Edit3, Trash2, CheckCircle, RotateCcw, Eye, PackageOpen,
+  PlusCircle, Trash2, CheckCircle, RotateCcw, Eye, PackageOpen,
 } from 'lucide-react';
 import { useMyListings, useListingActions } from '../../hooks/useSeller';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -34,13 +34,13 @@ export default function MyListings() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5 max-w-4xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My listings</h1>
           <p className="text-sm text-slate-500 mt-1">{data.length} listing{data.length === 1 ? '' : 's'}</p>
         </div>
-        <Link to="/sell" className="btn-primary">
+        <Link to="/sell" className="btn-primary w-full sm:w-auto justify-center">
           <PlusCircle size={16} /> New listing
         </Link>
       </div>
@@ -62,13 +62,22 @@ export default function MyListings() {
 
       <div className="space-y-3">
         {data.map((l) => (
-          <div key={l.id} className="card p-4 flex items-center gap-4">
-            <img
-              src={l.image_url || 'https://placehold.co/80'}
-              alt={l.title}
-              className="w-16 h-16 rounded-xl object-cover bg-slate-100"
-            />
-            <div className="flex-1 min-w-0">
+          <div key={l.id} className="card p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <img
+                src={l.image_url || 'https://placehold.co/80'}
+                alt={l.title}
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover bg-slate-100 shrink-0"
+              />
+              <div className="flex-1 min-w-0 sm:hidden">
+                <Link to={`/listing/${l.id}`} className="font-medium text-slate-900 truncate block hover:text-violet-700">
+                  {l.title}
+                </Link>
+                <p className="text-sm text-slate-500">M {l.price}</p>
+              </div>
+            </div>
+
+            <div className="flex-1 min-w-0 hidden sm:block">
               <div className="flex items-center gap-2">
                 <Link to={`/listing/${l.id}`} className="font-medium text-slate-900 truncate hover:text-violet-700">
                   {l.title}
@@ -85,28 +94,35 @@ export default function MyListings() {
               </p>
             </div>
 
-            <div className="flex items-center gap-1">
-              {l.status === 'active' && (
-                <>
-                  <Link to={`/listing/${l.id}`} className="btn-ghost" title="View">
-                    <Eye size={16} />
-                  </Link>
-                  <button className="btn-ghost text-emerald-600" title="Mark sold" onClick={() => handleSold(l.id)}>
-                    <CheckCircle size={16} />
+            {/* Mobile Status & Actions */}
+            <div className="flex items-center justify-between w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-0 border-slate-100">
+              <span className={`sm:hidden text-xs px-2 py-1 rounded-full ${STATUS_STYLES[l.status] === 'badge-emerald' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
+                {l.status}
+              </span>
+              
+              <div className="flex items-center gap-2">
+                {l.status === 'active' && (
+                  <>
+                    <Link to={`/listing/${l.id}`} className="btn-ghost p-2" title="View">
+                      <Eye size={18} />
+                    </Link>
+                    <button className="btn-ghost text-emerald-600 p-2" title="Mark sold" onClick={() => handleSold(l.id)}>
+                      <CheckCircle size={18} />
+                    </button>
+                    <button className="btn-ghost text-red-600 p-2" title="Delete" onClick={() => handleDelete(l.id)}>
+                      <Trash2 size={18} />
+                    </button>
+                  </>
+                )}
+                {l.status === 'sold' && (
+                  <button className="btn-ghost text-violet-600 p-2" title="Reactivate" onClick={() => handleReactivate(l.id)}>
+                    <RotateCcw size={18} />
                   </button>
-                  <button className="btn-ghost text-red-600" title="Delete" onClick={() => handleDelete(l.id)}>
-                    <Trash2 size={16} />
-                  </button>
-                </>
-              )}
-              {l.status === 'sold' && (
-                <button className="btn-ghost text-violet-600" title="Reactivate" onClick={() => handleReactivate(l.id)}>
-                  <RotateCcw size={16} />
-                </button>
-              )}
-              {l.status === 'removed' && (
-                <span className="text-xs text-slate-400 italic">Removed by admin</span>
-              )}
+                )}
+                {l.status === 'removed' && (
+                  <span className="text-xs text-slate-400 italic">Removed by admin</span>
+                )}
+              </div>
             </div>
           </div>
         ))}
