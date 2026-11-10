@@ -23,20 +23,22 @@ export async function verifyListingOnChain(listingId, contentHashHex) {
 }
 
 // Writing to the chain (MetaMask will pop up for the user to sign)
-export async function anchorListingOnChain(listingId, contentHashHex) {
+export async function anchorTransactionOnChain(txId, contentHashHex, amount) {
   if (!window.ethereum) throw new Error("Please install MetaMask");
   const provider = new BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();
   const contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
   
-  const refId = keccak256(toUtf8Bytes(listingId));
+  const refId = keccak256(toUtf8Bytes(txId));
   const hashBytes32 = contentHashHex.length === 66 ? contentHashHex : '0x' + contentHashHex.padStart(64, '0');
-  
-  console.log("Anchoring listing to Sepolia...");
+
+  console.log("Anchoring transaction hash to Sepolia...");
+  // We ONLY anchor the hash now. No deposit.
   const tx = await contract.anchor(refId, hashBytes32);
   await tx.wait();
-  console.log("✅ Anchored! Tx:", tx.hash);
-  return tx.hash;
+  console.log("✅ Transaction anchored! Tx:", tx.hash);
+  
+  return true;
 }
 
 export async function anchorTransactionOnChain(txId, contentHashHex, amount) {

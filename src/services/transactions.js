@@ -51,14 +51,14 @@ export async function recordTransaction({ listingId, sellerId, amount, quantity 
 
   if (error) throw error;
 
-  // 2. Safely try to anchor to blockchain (won't crash if Ganache is offline)
+  // 2. Safely anchor the hash to the blockchain (No escrow deposit)
   try {
     await anchorTransactionOnChain(data.id, contentHash, Number(amount));
   } catch (err) {
-    console.warn("Blockchain anchor skipped (Ganache offline)");
+    console.warn("Blockchain anchor skipped (MetaMask offline or rejected)");
   }
 
-  // 3. Decrement stock manually (Removed the broken .rpc line)
+  // 3. Decrement stock manually
   const { data: listing } = await supabase
     .from('listings')
     .select('stock')
