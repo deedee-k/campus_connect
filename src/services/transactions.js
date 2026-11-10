@@ -32,7 +32,6 @@ export async function recordTransaction({ listingId, sellerId, amount, quantity 
     JSON.stringify({ listingId, buyerId: user.id, sellerId, amount })
   );
 
-  // 1. Insert the transaction into Supabase
   const { data, error } = await supabase
     .from('transactions')
     .insert({
@@ -51,14 +50,12 @@ export async function recordTransaction({ listingId, sellerId, amount, quantity 
 
   if (error) throw error;
 
-  // 2. Safely anchor the hash to the blockchain (No escrow deposit)
   try {
     await anchorTransactionOnChain(data.id, contentHash, Number(amount));
   } catch (err) {
-    console.warn("Blockchain anchor skipped (MetaMask offline or rejected)");
+    console.warn("Blockchain anchor skipped.");
   }
 
-  // 3. Decrement stock manually
   const { data: listing } = await supabase
     .from('listings')
     .select('stock')
