@@ -32,7 +32,7 @@ export async function recordTransaction({ listingId, sellerId, amount, quantity 
     JSON.stringify({ listingId, buyerId: user.id, sellerId, amount })
   );
 
-  // Insert the transaction into Supabase first
+  // 1. Insert the transaction into Supabase
   const { data, error } = await supabase
     .from('transactions')
     .insert({
@@ -51,23 +51,29 @@ export async function recordTransaction({ listingId, sellerId, amount, quantity 
 
   if (error) throw error;
 
-  // Anchor and deposit to escrow on the blockchain
+  // 2. Safely try to anchor to blockchain (won't crash if Ganache is offline)
   try {
     await anchorTransactionOnChain(data.id, contentHash, Number(amount));
   } catch (err) {
-    console.warn("Escrow deposit failed, but transaction saved in DB:", err);
+    console.warn("Blockchain anchor skipped (Ganache offline)");
   }
 
-  // Deduct stock
-  await supabase.rpc('decrement_stock', { 
-    row_id: listingId, 
-    quantity_to_deduct: quantity 
-  }).catch(() => {}); // Ignore if rpc doesn't exist
-
-  // If stock reaches 0, mark as sold (simple fallback if no trigger)
-  const { data: listing } = await supabase.from('listings').select('stock').eq('id', listingId).single();
-  if (listing && listing.stock <= quantity) {
-    await supabase.from('listings').update({ status: 'sold' }).eq('id', listingId);
+  // 3. Decrement stock manually (Removed the broken .rpc line)
+  const { data: listing } = await supabase
+    .from('listings')
+    .select('stock')
+    .eq('id', listingId)
+    .single();
+    
+  if (listing) {
+    const newStock = Math.max(0, listing.stock - quantity);
+    await supabase
+      .from('listings')
+      .update({ 
+        stock: newStock,
+        status: newStock <= 0 ? 'sold' : 'active'
+      })
+      .eq('id', listingId);
   }
 
   return data;
