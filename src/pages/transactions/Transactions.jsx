@@ -2,10 +2,9 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
 import { fetchMyTransactions, updateDeliveryStatus } from '../../services/transactions';
-import { releaseEscrowPayment } from '../../services/blockchain';
 import { 
   Receipt, Package, ShoppingBag, ArrowUpRight, ArrowDownLeft, 
-  Calendar, CreditCard, Truck, CheckCircle
+  Calendar, CreditCard, Truck 
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,16 +25,6 @@ export default function Transactions() {
     },
   });
 
-  const handleReleasePayment = async (txId) => {
-    if (!confirm("Release payment to seller? This confirms you have received the item.")) return;
-    const success = await releaseEscrowPayment(txId);
-    if (success) {
-      toast.success('Payment released to seller!');
-    } else {
-      toast.error('Failed to release payment. Check console.');
-    }
-  };
-
   const purchases = data.filter((t) => t.buyer_id === profile?.id);
   const sales = data.filter((t) => t.seller_id === profile?.id);
 
@@ -50,7 +39,7 @@ export default function Transactions() {
   }, {});
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-5xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Order History</h1>
         <p className="text-sm text-slate-500 mt-1">Track your purchases and sales.</p>
@@ -145,16 +134,6 @@ export default function Transactions() {
                                 <span>Shipped</span>
                                 <span>Delivered</span>
                               </div>
-
-                              {/* RELEASE PAYMENT BUTTON */}
-                              {t.delivery_status === 'Delivered' && (
-                                <button
-                                  onClick={() => handleReleasePayment(t.id)}
-                                  className="btn-primary w-full mt-3 bg-emerald-600 hover:bg-emerald-700 text-xs py-1.5"
-                                >
-                                  Release Payment to Seller
-                                </button>
-                              )}
                             </div>
                           )}
                         </div>
