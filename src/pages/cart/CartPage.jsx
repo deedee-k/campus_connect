@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCart, updateCartQuantity, removeFromCart, clearCart } from '../../services/cart';
 import { recordTransaction } from '../../services/transactions';
-import { useAuth } from '../../store/authStore';
 import { Trash2, CreditCard, Smartphone, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
 export default function CartPage() {
-  const { profile } = useAuth();
   const nav = useNavigate();
   const qc = useQueryClient();
   const [paymentMethod, setPaymentMethod] = useState('Visa');

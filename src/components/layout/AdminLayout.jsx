@@ -10,25 +10,22 @@ const items = [
   { to: '/admin/ledger', label: 'Blockchain Ledger', icon: Database },
 ];
 
-export default function AdminLayout() {
-  const profile = useAuth((s) => s.profile);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const SidebarContent = () => (
+function SidebarContent({ profile, onClose }) {
+  return (
     <>
       <div className="p-5 border-b border-slate-200 flex justify-between items-center">
-        <Link to="/admin" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+        <Link to="/admin" className="flex items-center gap-2" onClick={onClose}>
           <span className="w-8 h-8 rounded-xl bg-violet-600 text-white grid place-items-center">
             <Shield size={16} />
           </span>
           <span className="font-bold text-slate-900">Admin Console</span>
         </Link>
         {/* Mobile Close Button */}
-        <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-slate-500 p-1">
+        <button onClick={onClose} className="md:hidden text-slate-500 p-1">
           <X size={20} />
         </button>
       </div>
-      
+
       <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
         <p className="text-xs text-slate-500 uppercase tracking-wide">Signed in as</p>
         <p className="text-sm font-medium text-slate-900">{profile?.name}</p>
@@ -40,12 +37,11 @@ export default function AdminLayout() {
             key={to}
             to={to}
             end={end}
-            onClick={() => setIsMobileMenuOpen(false)}
+            onClick={onClose}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? 'bg-violet-50 text-violet-700 font-medium'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              `flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors ${isActive
+                ? 'bg-violet-50 text-violet-700 font-medium'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`
             }
           >
@@ -61,12 +57,17 @@ export default function AdminLayout() {
       </div>
     </>
   );
+}
+
+export default function AdminLayout() {
+  const profile = useAuth((s) => s.profile);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex bg-slate-50">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col h-screen sticky top-0">
-        <SidebarContent />
+        <SidebarContent profile={profile} onClose={() => { }} />
       </aside>
 
       {/* Mobile Sidebar (Drawer) */}
@@ -74,7 +75,7 @@ export default function AdminLayout() {
         <div className="fixed inset-0 z-50 flex md:hidden">
           <div className="fixed inset-0 bg-black/50" onClick={() => setIsMobileMenuOpen(false)} />
           <aside className="relative w-64 max-w-[80%] bg-white h-full flex flex-col shadow-xl">
-            <SidebarContent />
+            <SidebarContent profile={profile} onClose={() => setIsMobileMenuOpen(false)} />
           </aside>
         </div>
       )}

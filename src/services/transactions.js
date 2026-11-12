@@ -51,9 +51,16 @@ export async function recordTransaction({ listingId, sellerId, amount, quantity 
   if (error) throw error;
 
   try {
-    await anchorTransactionOnChain(data.id, contentHash, Number(amount));
+    const txHash = await anchorTransactionOnChain(data.id, contentHash, Number(amount));
+    if (txHash) {
+      await supabase
+        .from('transactions')
+        .update({ blockchain_tx_hash: txHash })
+        .eq('id', data.id);
+      data.blockchain_tx_hash = txHash;
+    }
   } catch (err) {
-    console.warn("Blockchain anchor skipped.");
+    console.warn("Blockchain anchor skipped:", err);
   }
 
   const { data: listing } = await supabase
@@ -61,12 +68,12 @@ export async function recordTransaction({ listingId, sellerId, amount, quantity 
     .select('stock')
     .eq('id', listingId)
     .single();
-    
+
   if (listing) {
     const newStock = Math.max(0, listing.stock - quantity);
     await supabase
       .from('listings')
-      .update({ 
+      .update({
         stock: newStock,
         status: newStock <= 0 ? 'sold' : 'active'
       })
@@ -83,7 +90,7 @@ export async function updateDeliveryStatus(transactionId, status) {
     .eq('id', transactionId)
     .select()
     .single();
-    
+
   if (error) throw error;
   return data;
 }

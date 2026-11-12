@@ -2,12 +2,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft, Heart, MessageCircle, Tag, Eye, ShieldCheck, AlertTriangle, MapPin
+  ArrowLeft, Heart, MessageCircle, Tag, Eye, ShieldCheck, AlertTriangle, MapPin, ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useListing } from '../../hooks/useListings';
 import { addFavourite, removeFavourite, isFavourite } from '../../services/favourites';
-import { verifyListingOnChain } from '../../services/blockchain';
+import { verifyListingOnChain, getSepoliaTxUrl } from '../../services/blockchain';
 import { addToCart } from '../../services/cart';
 import { useAuth } from '../../store/authStore';
 import { supabase } from '../../lib/supabase';
@@ -17,7 +17,7 @@ export default function ListingDetailPage() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const { data: item, isLoading, isError, error } = useListing(id);
-  const profile = useAuth((s) => s.profile); 
+  const profile = useAuth((s) => s.profile);
 
   const [verifyResult, setVerifyResult] = useState(null);
   const [verifying, setVerifying] = useState(false);
@@ -137,7 +137,7 @@ export default function ListingDetailPage() {
               <span className="badge-violet">{item.category}</span>
               <span className="badge-slate">{item.condition}</span>
               <span className="badge-slate inline-flex items-center gap-1">
-                <Eye size={12}/> {item.views ?? 0}
+                <Eye size={12} /> {item.views ?? 0}
               </span>
             </div>
             <p className="text-slate-700 mt-4 whitespace-pre-wrap">{item.description}</p>
@@ -151,23 +151,36 @@ export default function ListingDetailPage() {
                 <p className="text-xs text-slate-500 mb-3">
                   Hash: <code className="bg-white px-1 py-0.5 rounded border">{item.content_hash.slice(0, 16)}…</code>
                 </p>
-                
-                <button 
-                  onClick={handleVerify}
-                  disabled={verifying}
-                  className="btn-outline text-xs py-1.5 px-3"
-                >
-                  {verifying ? 'Verifying...' : 'Verify on Ganache'}
-                </button>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={handleVerify}
+                    disabled={verifying}
+                    className="btn-outline text-xs py-1.5 px-3"
+                  >
+                    {verifying ? 'Verifying on Sepolia...' : 'Verify on Sepolia'}
+                  </button>
+
+                  {item.blockchain_tx_hash && (
+                    <a
+                      href={getSepoliaTxUrl(item.blockchain_tx_hash)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-violet-600 hover:text-violet-800 flex items-center gap-1 font-medium underline"
+                    >
+                      View on Etherscan <ExternalLink size={12} />
+                    </a>
+                  )}
+                </div>
 
                 {verifyResult === true && (
                   <p className="mt-2 text-emerald-600 font-medium flex items-center gap-1">
-                    ✓ Verified — matches blockchain
+                    ✓ Verified — matches Sepolia blockchain
                   </p>
                 )}
                 {verifyResult === false && (
                   <p className="mt-2 text-red-600 font-medium flex items-center gap-1">
-                    ✗ Tampered — hash mismatch
+                    ✗ Tampered — hash mismatch on Sepolia
                   </p>
                 )}
               </div>
@@ -179,7 +192,7 @@ export default function ListingDetailPage() {
           <div className="card p-5">
             <p className="text-xs uppercase tracking-wide text-slate-400">Seller</p>
             <p className="font-semibold text-slate-900 mt-1">{item.seller_name ?? 'Student'}</p>
-            
+
             {/* Display Seller Location */}
             {item.seller_location && (
               <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
@@ -200,7 +213,7 @@ export default function ListingDetailPage() {
                 >
                   {buying ? 'Processing...' : isOutOfStock ? 'Out of Stock' : 'Buy Now'}
                 </button>
-                <button 
+                <button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
                   className="btn-outline w-full mt-2 disabled:opacity-50"
@@ -214,7 +227,7 @@ export default function ListingDetailPage() {
               onClick={() => nav(`/chat/${item.id}`)}
               className="btn-outline w-full mt-2"
             >
-              <MessageCircle size={16}/> Ask AI Assistant
+              <MessageCircle size={16} /> Ask AI Assistant
             </button>
 
             <button
@@ -233,9 +246,9 @@ export default function ListingDetailPage() {
               <li>Inspect the item before paying</li>
               <li>Use the app to record the transaction</li>
             </ul>
-            
+
             {!isOwner && (
-              <button 
+              <button
                 onClick={handleReport}
                 className="text-xs text-red-600 hover:underline flex items-center gap-1 w-full justify-center pt-3 border-t border-slate-100"
               >

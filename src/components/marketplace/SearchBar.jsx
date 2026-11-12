@@ -3,36 +3,40 @@ import { Search, X, Clock, TrendingUp } from 'lucide-react';
 
 export function SearchBar({ value, onChange, placeholder = 'Search textbooks, electronics...' }) {
   const [draft, setDraft] = useState(value ?? '');
-  const [recent, setRecent] = useState([]);
+  const [prevValue, setPrevValue] = useState(value);
+  const [recent, setRecent] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('recent_searches') || '[]');
+    } catch {
+      return [];
+    }
+  });
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // Load recent searches from localStorage
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('recent_searches') || '[]');
-    setRecent(saved);
-  }, []);
-
-  // Debounce search
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (draft !== value) {
-        onChange(draft);
-        if (draft.trim().length > 2) {
-          saveSearch(draft.trim());
-        }
-      }
-    }, 300);
-    return () => clearTimeout(id);
-  }, [draft]);
-
-  useEffect(() => { setDraft(value ?? ''); }, [value]);
+  // Sync draft when parent value changes externally
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setDraft(value ?? '');
+  }
 
   const saveSearch = (term) => {
     const saved = JSON.parse(localStorage.getItem('recent_searches') || '[]');
-    const updated = [term, ...saved.filter(t => t.toLowerCase() !== term.toLowerCase())].slice(0, 5);
+    const updated = [term, ...saved.filter((t) => t.toLowerCase() !== term.toLowerCase())].slice(0, 5);
     localStorage.setItem('recent_searches', JSON.stringify(updated));
     setRecent(updated);
   };
+
+  // Debounce search
+  useEffect(() => {
+    if (draft === value) return;
+    const id = setTimeout(() => {
+      onChange(draft);
+      if (draft.trim().length > 2) {
+        saveSearch(draft.trim());
+      }
+    }, 300);
+    return () => clearTimeout(id);
+  }, [draft, value, onChange]);
 
   return (
     <div className="relative">
@@ -58,12 +62,12 @@ export function SearchBar({ value, onChange, placeholder = 'Search textbooks, el
       {/* Recommendations Dropdown */}
       {showDropdown && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
-          
+
           {/* Recently Searched */}
           {recent.length > 0 && (
             <div className="border-b border-slate-100">
               <p className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide bg-slate-50 flex items-center gap-1">
-                <Clock size={12}/> Recent Searches
+                <Clock size={12} /> Recent Searches
               </p>
               {recent.map((term, i) => (
                 <button
@@ -80,7 +84,7 @@ export function SearchBar({ value, onChange, placeholder = 'Search textbooks, el
           {/* Trending Recommendations */}
           <div>
             <p className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide bg-slate-50 flex items-center gap-1">
-              <TrendingUp size={12}/> Trending on Campus
+              <TrendingUp size={12} /> Trending on Campus
             </p>
             {['Samsung Phone', 'Calculus Textbook', 'Lenovo Laptop', 'University Hoodie'].map((term) => (
               <button

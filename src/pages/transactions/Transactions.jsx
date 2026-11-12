@@ -1,10 +1,10 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../store/authStore';
 import { fetchMyTransactions, updateDeliveryStatus } from '../../services/transactions';
 import { 
   Receipt, Package, ShoppingBag, ArrowUpRight, ArrowDownLeft, 
-  Calendar, CreditCard, Truck 
+  Calendar, CreditCard 
 } from 'lucide-react';
 import { toast } from 'sonner';
 
