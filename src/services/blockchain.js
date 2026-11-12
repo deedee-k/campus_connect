@@ -1,7 +1,7 @@
 import { BrowserProvider, Contract, JsonRpcProvider, keccak256, toUtf8Bytes } from "ethers";
 
 const SEPOLIA_RPC = "https://rpc.sepolia.org"; 
-const CONTRACT_ADDRESS = "0xc47326E7524321E13Ae7b9314f0E906Fcc1868cd"; 
+const CONTRACT_ADDRESS = "0xd9145CCE52D386f254917e481eB44e9943F39138"; 
 
 const ABI = [
   "function anchor(bytes32 refId, bytes32 contentHash) external",
