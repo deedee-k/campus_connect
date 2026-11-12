@@ -1,48 +1,38 @@
-import { BrowserProvider, Contract, JsonRpcProvider, keccak256, toUtf8Bytes } from "ethers";
+const API_URL = import.meta.env.VITE_AI_API_URL || 'http://localhost:5000';
 
-const SEPOLIA_RPC = "https://rpc.sepolia.org"; 
-const CONTRACT_ADDRESS = "0x510f01bE29eB8f4dB8C6591634Fd264b0fE67223"; 
+export async function anchorListingOnChain(listingId, contentHashHex) {
+  try {
+    const res = await fetch(`${API_URL}/anchor`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refId: listingId, contentHash: contentHashHex })
+    });
+    const data = await res.json();
+    if (data.success) {
+      console.log("✅ Anchored by backend! Tx:", data.txHash);
+      return data.txHash;
+    }
+    return null;
+  } catch (err) {
+    console.error("Backend anchor failed:", err);
+    return null;
+  }
+}
 
-const ABI = [
-  "function anchor(bytes32 refId, bytes32 contentHash) external",
-  "function verify(bytes32 refId, bytes32 contentHash) external view returns (bool)"
-];
+export async function anchorTransactionOnChain(txId, contentHashHex, amount) {
+  return anchorListingOnChain(txId, contentHashHex);
+}
 
-// Read-only verification
 export async function verifyListingOnChain(listingId, contentHashHex) {
-  const provider = new JsonRpcProvider(SEPOLIA_RPC);
-  const contract = new Contract(CONTRACT_ADDRESS, ABI, provider);
+  // Read-only verification using public RPC
+  const { JsonRpcProvider, Contract, keccak256, toUtf8Bytes } = await import("ethers");
+  const provider = new JsonRpcProvider("https://rpc.sepolia.org");
+  const contract = new Contract(
+    "0x0aCCE10AC00dd05aF572E4fe54c175446DB0b41a", 
+    ["function verify(bytes32 refId, bytes32 contentHash) external view returns (bool)"], 
+    provider
+  );
   const refId = keccak256(toUtf8Bytes(listingId));
   const hashBytes32 = contentHashHex.length === 66 ? contentHashHex : '0x' + contentHashHex.padStart(64, '0');
   return await contract.verify(refId, hashBytes32);
-}
-
-// Anchor a listing hash
-export async function anchorListingOnChain(listingId, contentHashHex) {
-  if (!window.ethereum) throw new Error("Please install MetaMask");
-  const provider = new BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  const contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
-  
-  const refId = keccak256(toUtf8Bytes(listingId));
-  const hashBytes32 = contentHashHex.length === 66 ? contentHashHex : '0x' + contentHashHex.padStart(64, '0');
-  
-  const tx = await contract.anchor(refId, hashBytes32);
-  await tx.wait();
-  return tx.hash;
-}
-
-// Anchor a transaction hash (No escrow deposit)
-export async function anchorTransactionOnChain(txId, contentHashHex, amount) {
-  if (!window.ethereum) throw new Error("Please install MetaMask");
-  const provider = new BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  const contract = new Contract(CONTRACT_ADDRESS, ABI, signer);
-  
-  const refId = keccak256(toUtf8Bytes(txId));
-  const hashBytes32 = contentHashHex.length === 66 ? contentHashHex : '0x' + contentHashHex.padStart(64, '0');
-
-  const tx = await contract.anchor(refId, hashBytes32);
-  await tx.wait();
-  return true;
 }
